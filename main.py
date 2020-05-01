@@ -1,7 +1,4 @@
-import config
-import asyncio
-import sys
-import os
+import config, asyncio. sys, os
 
 
 async def run_client(client):

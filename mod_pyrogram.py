@@ -1,6 +1,4 @@
-import asyncio
-import functools
-import pyrogram
+import asyncio, functools, pyrogram
 
 loop = asyncio.get_event_loop()
 
