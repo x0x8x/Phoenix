@@ -1,5 +1,5 @@
 import logging
-import pyrogram_mod
+import mod_pyrogram
 from pyrogram import Client
 
 client = Client("Phoenix")
