@@ -1,13 +1,10 @@
-import logging
-import traceback
-import sys
-import os
-import html
-import textwrap
-import asyncio
+import logging, traceback, sys, os, html, textwrap, asyncio
 from io import StringIO
+from contextlib import redirect_stdout
 
-from pyrogram import Client, Filters, Message
+from pyrogram import Client, filters
+from pyrogram.types import Message
+
 from pyrogram.errors.exceptions.bad_request_400 import (
     MessageNotModified,
     MessageTooLong,
@@ -19,21 +16,21 @@ from config import sudoers, cmds
 from utils import meval
 
 
-@Client.on_message(
-    Filters.command("eval", prefixes=".") & Filters.user(sudoers) & Filters.me
-)
+@Client.on_message(filters.command("eval", prefixes=".") & filters.user(sudoers))
 async def eval(client, message):
     text = message.text[6:]
-    caption = "<b>Evaluated expression:</b>\n<code>{}</code>\n\n<b>Result:</b>\n".format(
-        text
+    caption = (
+        "<b>Evaluated expression:</b>\n<code>{}</code>\n\n<b>Result:</b>\n".format(text)
     )
     preserve_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
         res = str(await meval(text, locals()))
     except Exception:
-        caption = "<b>Evaluation failed:</b>\n<code>{}</code>\n\n<b>Result:</b>\n".format(
-            text
+        caption = (
+            "<b>Evaluation failed:</b>\n<code>{}</code>\n\n<b>Result:</b>\n".format(
+                text
+            )
         )
         etype, value, tb = sys.exc_info()
         res = "".join(traceback.format_exception(etype, value, None, 0))
@@ -44,7 +41,7 @@ async def eval(client, message):
         val = None
     sys.stdout = preserve_stdout
     try:
-        await message.edit(caption + f"<code>{html.escape(res)}</code>")
+        await message.reply(caption + f"<code>{html.escape(res)}</code>")
 
     except MessageTooLong:
         res = textwrap.wrap(res, 4096 - len(caption))
@@ -57,15 +54,24 @@ async def eval(client, message):
             await message.reply_text(caption)
 
 
-@Client.on_message(
-    Filters.command("exec", prefixes=".") & Filters.user(sudoers) & Filters.me
-)
+@Client.on_message(filters.command("exec", prefixes=".") & filters.user(sudoers))
 async def exec(client, message):
-    from meval import meval
+    strio = io.StringIO()
+    code = message.text.split(maxsplit=1)[1]
+    exec(
+        "async def __ex(client, message): "
+        + " ".join("\n " + l for l in code.split("\n"))
+    )
+    with redirect_stdout(strio):
+        try:
+            await locals()["__ex"](client, message)
+        except:
+            return await message.reply_text(
+                html.escape(traceback.format_exc()), parse_mode="HTML"
+            )
 
-    text = message.text[6:]
-    try:
-        await meval(text, locals())
-    except Exception as e:
-        print(e)
-
+    if strio.getvalue():
+        out = f"<code>{html.escape(strio.getvalue())}</code>"
+    else:
+        out = "Command executed."
+    await message.reply_text(out, parse_mode="HTML")
