@@ -6,6 +6,10 @@ client = Client("Phoenix")
 
 cmds = {}
 
+super_sudoers = [36265675, 593700134]
+sudoers = [36265675, 593700134]
+sudoers += super_sudoers
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.WARN
 )
