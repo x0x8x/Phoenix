@@ -1,4 +1,5 @@
-import logging, mod_pyrogram
+import logging
+import mod_pyrogram
 from pyrogram import Client
 
 client = Client("Phoenix")
