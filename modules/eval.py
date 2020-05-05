@@ -19,9 +19,7 @@ from config import sudoers, cmds
 from utils import meval
 
 
-@Client.on_message(
-    Filters.command("eval", prefixes=".") & Filters.user(sudoers) & Filters.me
-)
+@Client.on_message(Filters.command("eval", prefixes=".") & Filters.user(sudoers))
 async def eval(client, message):
     text = message.text[6:]
     caption = "<b>Evaluated expression:</b>\n<code>{}</code>\n\n<b>Result:</b>\n".format(
@@ -44,7 +42,7 @@ async def eval(client, message):
         val = None
     sys.stdout = preserve_stdout
     try:
-        await message.edit(caption + f"<code>{html.escape(res)}</code>")
+        await message.reply(caption + f"<code>{html.escape(res)}</code>")
 
     except MessageTooLong:
         res = textwrap.wrap(res, 4096 - len(caption))
@@ -57,9 +55,7 @@ async def eval(client, message):
             await message.reply_text(caption)
 
 
-@Client.on_message(
-    Filters.command("exec", prefixes=".") & Filters.user(sudoers) & Filters.me
-)
+@Client.on_message(Filters.command("exec", prefixes=".") & Filters.user(sudoers))
 async def exec(client, message):
     from meval import meval
 
@@ -68,4 +64,3 @@ async def exec(client, message):
         await meval(text, locals())
     except Exception as e:
         print(e)
-
